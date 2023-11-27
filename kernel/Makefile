@@ -120,13 +120,7 @@ $(obj)/configs.o: $(obj)/config_data.h
 
 targets += config_data.gz
 
-ifneq ($(CONFIG_MACH_XIAOMI_CEPHEUS),y)
-$(obj)/config_data.gz: arch/arm64/configs/cepheus_stock_defconfig FORCE
-endif
-
-ifneq ($(CONFIG_MACH_XIAOMI_RAPHAEL),y)
 $(obj)/config_data.gz: arch/arm64/configs/raphael_stock_defconfig FORCE
-endif
 	$(call if_changed,gzip)
 
       filechk_ikconfiggz = (echo "static const char kernel_config_data[] __used = MAGIC_START"; cat $< | scripts/basic/bin2c; echo "MAGIC_END;")
