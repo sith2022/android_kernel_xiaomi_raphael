@@ -806,34 +806,8 @@ int thermal_zone_bind_cooling_device(struct thermal_zone_device *tz,
 	if (result)
 		goto remove_symbol_link;
 
-<<<<<<< HEAD
-	snprintf(dev->upper_attr_name, THERMAL_NAME_LENGTH,
-			"cdev%d_upper_limit", dev->id);
-	sysfs_attr_init(&dev->upper_attr.attr);
-	dev->upper_attr.attr.name = dev->upper_attr_name;
-	dev->upper_attr.attr.mode = 0644;
-	dev->upper_attr.show = thermal_cooling_device_upper_limit_show;
-	dev->upper_attr.store = thermal_cooling_device_upper_limit_store;
-	result = device_create_file(&tz->device, &dev->upper_attr);
-	if (result)
-		goto remove_trip_file;
-
-	snprintf(dev->lower_attr_name, THERMAL_NAME_LENGTH,
-			"cdev%d_lower_limit", dev->id);
-	sysfs_attr_init(&dev->lower_attr.attr);
-	dev->lower_attr.attr.name = dev->lower_attr_name;
-	dev->lower_attr.attr.mode = 0644;
-	dev->lower_attr.show = thermal_cooling_device_lower_limit_show;
-	dev->lower_attr.store = thermal_cooling_device_lower_limit_store;
-	result = device_create_file(&tz->device, &dev->lower_attr);
-	if (result)
-		goto remove_upper_file;
-
-	sprintf(dev->weight_attr_name, "cdev%d_weight", dev->id);
-=======
 	snprintf(dev->weight_attr_name, sizeof(dev->weight_attr_name),
 		 "cdev%d_weight", dev->id);
->>>>>>> 57e87fab194769d294b794f76746ddf7d9464fe2
 	sysfs_attr_init(&dev->weight_attr.attr);
 	dev->weight_attr.attr.name = dev->weight_attr_name;
 	dev->weight_attr.attr.mode = S_IWUSR | S_IRUGO;
