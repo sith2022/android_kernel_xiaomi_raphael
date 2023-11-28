@@ -522,7 +522,6 @@ static int f2fs_set_zstd_level(struct f2fs_sb_info *sbi, const char *str)
 	return 0;
 }
 #endif
-#endif
 
 static int parse_options(struct super_block *sb, char *options, bool is_remount)
 {
