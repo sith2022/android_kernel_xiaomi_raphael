@@ -167,6 +167,19 @@ static inline void tlb_remove_page(struct mmu_gather *tlb, struct page *page)
 	return tlb_remove_page_size(tlb, page, PAGE_SIZE);
 }
 
+static inline void tlb_change_page_size(struct mmu_gather *tlb,
+						     unsigned int page_size)
+{
+#ifdef CONFIG_MMU_GATHER_PAGE_SIZE
+	if (tlb->page_size && tlb->page_size != page_size) {
+		if (!tlb->fullmm)
+			tlb_flush_mmu(tlb);
+	}
+
+	tlb->page_size = page_size;
+#endif
+}
+
 #ifndef tlb_remove_check_page_size_change
 #define tlb_remove_check_page_size_change tlb_remove_check_page_size_change
 static inline void tlb_remove_check_page_size_change(struct mmu_gather *tlb,
