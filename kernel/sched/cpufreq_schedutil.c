@@ -246,10 +246,6 @@ static void sugov_update_commit(struct sugov_policy *sg_policy, u64 time,
 		if (!next_freq)
 			return;
 
-		policy->cur = next_freq;
-		for_each_cpu(cpu, policy->cpus) {
-			trace_cpu_frequency(next_freq, cpu);
-		}
 	} else {
 		if (use_pelt())
 			sg_policy->work_in_progress = true;
@@ -288,7 +284,6 @@ static unsigned int get_next_freq(struct sugov_policy *sg_policy,
 				policy->cpuinfo.max_freq : policy->cur;
 
 	freq = (freq + (freq >> 2)) * util / max;
-	trace_sugov_next_freq(policy->cpu, util, max, freq);
 
 	if (freq == sg_policy->cached_raw_freq && sg_policy->next_freq != UINT_MAX)
 		return sg_policy->next_freq;
@@ -1102,11 +1097,6 @@ static void sugov_limits(struct cpufreq_policy *policy)
 		sugov_track_cycles(sg_policy, sg_policy->policy->cur,
 				   ktime_get_ns());
 		ret = cpufreq_policy_apply_limits_fast(policy);
-		if (ret && policy->cur != ret) {
-			policy->cur = ret;
-			for_each_cpu(cpu, policy->cpus)
-				trace_cpu_frequency(ret, cpu);
-		}
 		raw_spin_unlock_irqrestore(&sg_policy->update_lock, flags);
 	}
 
