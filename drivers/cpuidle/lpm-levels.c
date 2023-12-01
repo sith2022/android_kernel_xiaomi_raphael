@@ -359,19 +359,6 @@ static enum hrtimer_restart lpm_hrtimer_cb(struct hrtimer *h)
 	return HRTIMER_NORESTART;
 }
 
-static void histtimer_cancel(void)
-{
-	unsigned int cpu = raw_smp_processor_id();
-	struct hrtimer *cpu_histtimer = &per_cpu(histtimer, cpu);
-	ktime_t time_rem;
-
-	time_rem = hrtimer_get_remaining(cpu_histtimer);
-	if (ktime_to_us(time_rem) <= 0)
-		return;
-
-	hrtimer_try_to_cancel(cpu_histtimer);
-}
-
 static enum hrtimer_restart histtimer_fn(struct hrtimer *h)
 {
 	int cpu = raw_smp_processor_id();
@@ -409,27 +396,6 @@ static void cluster_timer_init(struct lpm_cluster *cluster)
 	}
 }
 
-static void clusttimer_cancel(void)
-{
-	int cpu = raw_smp_processor_id();
-	struct lpm_cluster *cluster = per_cpu(cpu_lpm, cpu)->parent;
-	ktime_t time_rem;
-
-	time_rem = hrtimer_get_remaining(&cluster->histtimer);
-	if (ktime_to_us(time_rem) > 0)
-		hrtimer_try_to_cancel(&cluster->histtimer);
-
-	if (cluster->parent) {
-		time_rem = hrtimer_get_remaining(
-			&cluster->parent->histtimer);
-
-		if (ktime_to_us(time_rem) <= 0)
-			return;
-
-		hrtimer_try_to_cancel(&cluster->parent->histtimer);
-	}
-}
-
 static enum hrtimer_restart clusttimer_fn(struct hrtimer *h)
 {
 	struct lpm_cluster *cluster = container_of(h,
@@ -456,19 +422,6 @@ static void msm_pm_set_timer(uint32_t modified_time_us)
 
 	lpm_hrtimer.function = lpm_hrtimer_cb;
 	hrtimer_start(&lpm_hrtimer, modified_ktime, HRTIMER_MODE_REL_PINNED);
-}
-
-static void biastimer_cancel(void)
-{
-	unsigned int cpu = raw_smp_processor_id();
-	struct hrtimer *cpu_biastimer = &per_cpu(biastimer, cpu);
-	ktime_t time_rem;
-
-	time_rem = hrtimer_get_remaining(cpu_biastimer);
-	if (ktime_to_us(time_rem) <= 0)
-		return;
-
-	hrtimer_try_to_cancel(cpu_biastimer);
 }
 
 static enum hrtimer_restart biastimer_fn(struct hrtimer *h)
@@ -669,8 +622,6 @@ static void clear_predict_history(void)
 		}
 	}
 }
-
-static void update_history(struct cpuidle_device *dev, int idx);
 
 static inline bool is_cpu_biased(int cpu, uint64_t *bias_time)
 {
@@ -1459,40 +1410,6 @@ void update_ipi_history(int cpu)
 	if (history->current_ptr >= MAXSAMPLES)
 		history->current_ptr = 0;
 	history->cpu_idle_resched_ts = now;
-}
-
-static void update_history(struct cpuidle_device *dev, int idx)
-{
-	struct lpm_history *history = &per_cpu(hist, dev->cpu);
-	uint32_t tmr = 0;
-	struct lpm_cpu *lpm_cpu = per_cpu(cpu_lpm, dev->cpu);
-
-	if (!lpm_prediction || !lpm_cpu->lpm_prediction)
-		return;
-
-	if (history->htmr_wkup) {
-		if (!history->hptr)
-			history->hptr = MAXSAMPLES-1;
-		else
-			history->hptr--;
-
-		history->resi[history->hptr] += dev->last_residency;
-		history->htmr_wkup = 0;
-		tmr = 1;
-	} else
-		history->resi[history->hptr] = dev->last_residency;
-
-	history->mode[history->hptr] = idx;
-
-	trace_cpu_pred_hist(history->mode[history->hptr],
-		history->resi[history->hptr], history->hptr, tmr);
-
-	if (history->nsamp < MAXSAMPLES)
-		history->nsamp++;
-
-	(history->hptr)++;
-	if (history->hptr >= MAXSAMPLES)
-		history->hptr = 0;
 }
 
 static int lpm_cpuidle_enter(struct cpuidle_device *dev,
