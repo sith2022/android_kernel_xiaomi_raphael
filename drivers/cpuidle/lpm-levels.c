@@ -1500,24 +1500,6 @@ static int lpm_cpuidle_enter(struct cpuidle_device *dev,
 {
 	wfi();
 
-exit:
-	end_time = ktime_to_ns(ktime_get());
-	lpm_stats_cpu_exit(idx, end_time, success);
-
-	cluster_unprepare(cpu->parent, cpumask, idx, true, end_time, success);
-	cpu_unprepare(cpu, idx, true);
-	dev->last_residency = ktime_us_delta(ktime_get(), start);
-	update_history(dev, idx);
-	trace_cpu_idle_exit(idx, success);
-	if (lpm_prediction && cpu->lpm_prediction) {
-		histtimer_cancel();
-		clusttimer_cancel();
-	}
-	if (cpu->bias) {
-		biastimer_cancel();
-		cpu->bias = 0;
-	}
-	local_irq_enable();
 	return idx;
 }
 
